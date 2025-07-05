@@ -1,6 +1,5 @@
 "use client";
 
-import { createFoodDonation } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -167,30 +166,43 @@ export function DonationForm({ donation }: DonationFormProps) {
     try {
       const formData = new FormData();
 
-      // Add form fields to FormData
+      // Strings (no change needed)
       formData.append("title", data.title);
       formData.append("description", data.description);
-      formData.append("quantity", data.quantity);
-      formData.append("type", data.type.join(","));
       formData.append("address", data.address);
       formData.append("city", data.city);
       formData.append("state", data.state);
-      formData.append("latitude", data.latitude);
-      formData.append("longitude", data.longitude);
+
+      // Numbers → strings!
+      formData.append("quantity", data.quantity.toString());
+      formData.append("latitude", data.latitude.toString());
+      formData.append("longitude", data.longitude.toString());
+
+      // Date → ISO string
       formData.append("expiryDate", data.expiryDate.toISOString());
 
-      if (data.allergens && data.allergens.length > 0) {
+      // Arrays → comma‑separated string (or you can append each item individually)
+      formData.append("type", data.type.join(","));
+      if (data.allergens?.length) {
         formData.append("allergens", data.allergens.join(","));
       }
 
-      // Add images if any
-      if (data.images && data.images.length > 0) {
-        for (let i = 0; i < data.images.length; i++) {
-          formData.append("foodImage", data.images[i]);
-        }
+      console.log(data.images);
+      for (let i = 0; i < data.images.length; i++) {
+        formData.append("foodImage", data.images[i]);
       }
-
-      const result = await createFoodDonation(formData);
+      const token = localStorage.getItem("plateshare-auth-token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/food-donations`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+      const result = await response.json();
 
       if (result.success) {
         toast({

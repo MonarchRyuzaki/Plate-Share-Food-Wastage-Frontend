@@ -49,7 +49,8 @@ export default function DonorLoginPage() {
     setIsSubmitting(true);
     try {
       const result = await loginDonor(values);
-
+      console.log(result);
+      localStorage.setItem("plateshare-auth-token", result.token || "");
       if (result.success) {
         toast({
           title: "Success",

@@ -65,7 +65,7 @@ export async function loginDonor(formData: unknown) {
         httpOnly: true,
         path: "/",
       });
-      return { success: "Login successful! Redirecting..." };
+      return { success: "Login successful! Redirecting...", token : data.token };
     }
 
     return { error: "Login failed: Invalid server response." };
