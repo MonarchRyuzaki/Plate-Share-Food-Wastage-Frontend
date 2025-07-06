@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export interface Donation {
   _id: string;
@@ -38,6 +41,23 @@ export interface Donation {
 
 export function DonationCard({ donation }: { donation: Donation }) {
   const location = `${donation.city}, ${donation.state}`;
+  const searchParams = useSearchParams();
+
+  // Create URL with preserved location parameters (lat, long, locationName)
+  // Exclude filter-specific parameters for the details page
+  const detailsUrl = (() => {
+    const params = new URLSearchParams();
+
+    // Only preserve location-related parameters
+    const lat = searchParams.get("lat");
+    const long = searchParams.get("long");
+
+    if (lat) params.set("lat", lat);
+    if (long) params.set("long", long);
+
+    const queryString = params.toString();
+    return `/donations/${donation._id}${queryString ? `?${queryString}` : ""}`;
+  })();
 
   return (
     <Card className="flex flex-col">
@@ -104,7 +124,7 @@ export function DonationCard({ donation }: { donation: Donation }) {
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full">
-          <Link href={`/donations/${donation._id}`}>
+          <Link href={detailsUrl}>
             View Details <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
