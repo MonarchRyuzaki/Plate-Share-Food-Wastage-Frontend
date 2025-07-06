@@ -19,7 +19,7 @@ export async function loginNgo(formData: unknown) {
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/login-ngo`,
       {
         method: "POST",
         headers: {
@@ -28,7 +28,6 @@ export async function loginNgo(formData: unknown) {
         body: JSON.stringify({
           email,
           password,
-          role: "ngo",
         }),
       }
     );

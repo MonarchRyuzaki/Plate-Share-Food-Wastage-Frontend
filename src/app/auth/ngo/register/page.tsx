@@ -1,6 +1,5 @@
-'use client';
+"use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,11 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Handshake } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Form,
   FormControl,
@@ -23,37 +17,57 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Handshake } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { registerNgo } from "./action";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ACCEPTED_FILE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"];
-
+const ACCEPTED_FILE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
 
 const formSchema = z.object({
-  name: z.string().min(2, { message: "NGO name must be at least 2 characters." }),
-  registrationNumber: z.string().min(1, { message: "Registration number is required." }),
+  name: z
+    .string()
+    .min(2, { message: "NGO name must be at least 2 characters." }),
+  registrationNumber: z
+    .string()
+    .min(1, { message: "Registration number is required." }),
   cause: z.string().min(3, { message: "Cause must be at least 3 characters." }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
+  description: z
+    .string()
+    .min(10, { message: "Description must be at least 10 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
   phone: z.string().min(10, { message: "Please enter a valid phone number." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters." }),
   address: z.string().min(5, { message: "Please enter a valid address." }),
   city: z.string().min(2, { message: "Please enter a valid city." }),
   state: z.string().min(2, { message: "Please enter a valid state." }),
   registrationProof: z
     .any()
     .refine((files) => files?.length === 1, "Registration proof is required.")
-    .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+      (files) => files?.[0]?.size <= MAX_FILE_SIZE,
+      `Max file size is 5MB.`
+    )
     .refine(
       (files) => ACCEPTED_FILE_TYPES.includes(files?.[0]?.type),
       "Only .jpg, .png, .webp, and .pdf formats are supported."
     ),
 });
-
 
 export default function NgoRegisterPage() {
   const { toast } = useToast();
@@ -78,40 +92,53 @@ export default function NgoRegisterPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    const formData = new FormData();
-
-    Object.entries(values).forEach(([key, value]) => {
-      if (key === 'registrationProof') {
-        formData.append(key, value[0]);
-      } else {
-        formData.append(key, value as string);
-      }
-    });
 
     try {
-      const result = await registerNgo(formData);
+      const formData = new FormData();
 
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: result.success,
-        });
-        router.push("/auth/ngo/login");
-      } else {
+      // Append all form fields to FormData
+      Object.entries(values).forEach(([key, value]) => {
+        if (key === "registrationProof") {
+          formData.append("idProof", value[0]); // Backend expects 'idProof' field name
+        } else {
+          formData.append(key, value as string);
+        }
+      });
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/register-ngo`,
+        {
+          method: "POST",
+          body: formData, // Sending as multipart/form-data
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
         toast({
           title: "Error",
-          description: result.error,
+          description: data.error || "Registration failed.",
           variant: "destructive",
         });
+        return;
       }
+
+      toast({
+        title: "Success",
+        description: "Registration successful! You can now log in.",
+      });
+      router.push("/auth/ngo/login");
     } catch (error) {
+      console.error("Registration error:", error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred.",
+        description:
+          "An unexpected error occurred while processing your request.",
         variant: "destructive",
       });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   }
 
@@ -120,10 +147,12 @@ export default function NgoRegisterPage() {
       <Card className="mx-auto max-w-2xl w-full">
         <CardHeader>
           <div className="flex justify-center mb-4">
-              <Link href="/" className="flex items-center justify-center">
-                  <Handshake className="h-8 w-8 text-primary" />
-                  <span className="ml-2 text-2xl font-bold font-headline">PlateShare</span>
-              </Link>
+            <Link href="/" className="flex items-center justify-center">
+              <Handshake className="h-8 w-8 text-primary" />
+              <span className="ml-2 text-2xl font-bold font-headline">
+                PlateShare
+              </span>
+            </Link>
           </div>
           <CardTitle className="text-xl text-center">NGO Sign Up</CardTitle>
           <CardDescription className="text-center">
@@ -160,14 +189,17 @@ export default function NgoRegisterPage() {
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={form.control}
                   name="cause"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Primary Cause</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Hunger Relief, Community Support" {...field} />
+                        <Input
+                          placeholder="e.g., Hunger Relief, Community Support"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -181,38 +213,45 @@ export default function NgoRegisterPage() {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Tell us about your NGO's mission and work." {...field} />
+                      <Textarea
+                        placeholder="Tell us about your NGO's mission and work."
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                        <Input type="email" placeholder="contact@communityfoodbank.org" {...field} />
-                        </FormControl>
-                        <FormMessage />
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="contact@communityfoodbank.org"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                    )}
+                  )}
                 />
                 <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
                         <Input placeholder="123-456-7890" {...field} />
-                        </FormControl>
-                        <FormMessage />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                    )}
+                  )}
                 />
               </div>
               <FormField
@@ -228,7 +267,7 @@ export default function NgoRegisterPage() {
                   </FormItem>
                 )}
               />
-               <FormField
+              <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
@@ -242,7 +281,7 @@ export default function NgoRegisterPage() {
                 )}
               />
               <div className="grid grid-cols-2 gap-4">
-                 <FormField
+                <FormField
                   control={form.control}
                   name="city"
                   render={({ field }) => (
@@ -255,7 +294,7 @@ export default function NgoRegisterPage() {
                     </FormItem>
                   )}
                 />
-                 <FormField
+                <FormField
                   control={form.control}
                   name="state"
                   render={({ field }) => (
@@ -270,7 +309,7 @@ export default function NgoRegisterPage() {
                 />
               </div>
 
-               <FormField
+              <FormField
                 control={form.control}
                 name="registrationProof"
                 render={({ field: { onChange, onBlur, name, ref } }) => (
@@ -287,8 +326,9 @@ export default function NgoRegisterPage() {
                         className="file:text-primary"
                       />
                     </FormControl>
-                     <FormDescription>
-                      Upload a PDF or image of your registration certificate (Max 5MB).
+                    <FormDescription>
+                      Upload a PDF or image of your registration certificate
+                      (Max 5MB).
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -309,5 +349,5 @@ export default function NgoRegisterPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
