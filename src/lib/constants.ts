@@ -25,3 +25,4 @@ export const ALLERGENS = [
   "Tree_Nuts",
   "Wheat",
 ];
+export const PRIORITIES = ["High", "Medium", "Low"];
