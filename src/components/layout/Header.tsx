@@ -29,14 +29,13 @@ const Header = async () => {
         <Utensils className="h-6 w-6 text-primary" />
         <span className="ml-2 text-xl font-bold font-headline">PlateShare</span>
       </Link>
-      <nav className="ml-auto flex gap-2 sm:gap-4 items-center">
-        <Button variant="ghost" asChild className="hidden sm:inline-flex">
-          <Link href="/donations">Donations</Link>
-        </Button>
-        <Button variant="ghost" asChild className="hidden sm:inline-flex">
-          <Link href="/#about">About Us</Link>
-        </Button>
-
+      <Button variant="ghost" asChild className="hidden sm:inline-flex">
+        <Link href="/donations">Donations</Link>
+      </Button>
+      <Button variant="ghost" asChild className="hidden sm:inline-flex">
+        <Link href="/#about">About Us</Link>
+      </Button>
+      <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
         {token && userName && userRole ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -54,14 +53,11 @@ const Header = async () => {
                 <Link href={dashboardHref}>Dashboard</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
-                className="p-0 cursor-pointer"
-              >
+              <DropdownMenuItem asChild>
                 <form action={logout} className="w-full">
                   <button
                     type="submit"
-                    className="w-full text-left px-2 py-1.5 text-sm flex items-center"
+                    className="w-full text-left px-2 py-1.5 text-sm flex items-center cursor-pointer"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Logout</span>
@@ -72,8 +68,7 @@ const Header = async () => {
           </DropdownMenu>
         ) : (
           <>
-            <div className="w-px h-6 bg-border mx-2 hidden sm:block"></div>
-            <div className="hidden sm:flex gap-2">
+            <div className="hidden sm:flex gap-4">
               <Button variant="ghost" asChild>
                 <Link href="/auth/donor/login">Donor Login</Link>
               </Button>
@@ -85,7 +80,7 @@ const Header = async () => {
               asChild
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              <Link href="/auth/donor/register">Sign Up</Link>
+              <Link href="/auth/donor/register">Get Started</Link>
             </Button>
           </>
         )}
