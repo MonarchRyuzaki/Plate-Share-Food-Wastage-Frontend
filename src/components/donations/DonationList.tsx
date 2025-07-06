@@ -7,8 +7,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 
-const PAGE_SIZE = 6;
-
 interface PaginationInfo {
   page: number;
   pageSize: number;
@@ -59,51 +57,69 @@ export default function DonationList() {
         long: long.toString(),
         distance: distance.toString(),
         page: currentPage.toString(),
-        pageSize: PAGE_SIZE.toString(),
       });
 
-      // Add filter parameters from URL
+      // Add filter parameters from URL - only if they have values
       const priorities = searchParams.get("priorities");
-      if (priorities) {
+      if (priorities && priorities.trim()) {
         params.append("priority", priorities);
       }
 
       const preferredFood = searchParams.get("preferredFood");
-      if (preferredFood) {
+      if (preferredFood && preferredFood.trim()) {
         params.append("prefersFoodType", preferredFood);
       }
 
       const rejectedFood = searchParams.get("rejectedFood");
-      if (rejectedFood) {
+      if (rejectedFood && rejectedFood.trim()) {
         params.append("rejectsFoodType", rejectedFood);
       }
 
       const avoidAllergens = searchParams.get("avoidAllergens");
-      if (avoidAllergens) {
+      if (avoidAllergens && avoidAllergens.trim()) {
         params.append("avoidsAllergens", avoidAllergens);
       }
+
+      console.log("Fetching donations with params:", params.toString());
+
+      // Add cache-busting timestamp to prevent 304 responses
+      params.append("_t", Date.now().toString());
 
       const response = await fetch(
         `${
           process.env.NEXT_PUBLIC_BACKEND_URL
-        }/api/food-donations?${params.toString()}`
+        }/api/food-donations?${params.toString()}`,
+        {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch donations: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error("API Error Response:", errorText);
+        throw new Error(
+          `Failed to fetch donations: ${response.status} ${response.statusText}`
+        );
       }
 
       const data: DonationResponse = await response.json();
+      console.log("API Response:", data);
 
       // Transform the data to match our frontend interface
       const transformedDonations = data.donations.map((donation: any) => ({
         ...donation,
-        donorName: donation.userId.name || "Anonymous Donor",
+        donorName: donation.userId?.name || "Anonymous Donor",
         foodImage:
           donation.foodImage?.[0]?.url || "https://placehold.co/400x200.png",
         expiryDate: new Date(donation.expiryDate),
       }));
 
+      console.log("Transformed donations:", transformedDonations);
       setDonations(transformedDonations);
       setPagination(data.pagination);
     } catch (err) {
