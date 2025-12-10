@@ -1,28 +1,20 @@
-export const FOOD_TYPES = [
-  "BakedGoods",
-  "Beverages",
-  "CookedFood",
-  "DairyProducts",
-  "Diabetic_Sweets",
-  "FreshProduce",
-  "Grains_and_Cereals",
-  "Meat",
-  "Non_Diabetic_Sweets",
-  "Processed_and_Packaged",
-  "Sea_Food",
-  "Snacks",
-  "Spices_and_Condiments",
-  "Staple_Foods",
-];
+export const FOOD_TYPES = {
+  BakedGood: ["Bagel", "BreadLoaf", "Cake", "Cookie", "Croissant", "Muffin"],
+  Beverage: ["Coffee", "Juice", "Soda", "Tea"],
+  CookedMeal: ["Biryani", "Burger", "Curry", "Pasta", "Pizza", "Soup"],
+  DairyProduct: ["Butter", "CheeseBlock", "Cream", "Yogurt"],
+  FreshProduce: ["Apple", "Banana", "Carrot", "Potato", "Spinach", "Tomato"],
+  MeatProduct: ["Chicken", "Ham", "Mutton", "Sausage"],
+};
 
-export const ALLERGENS = [
-  "Crustacean_shellfish",
-  "Eggs",
-  "Fish",
-  "Milk",
-  "Sesame",
-  "Soybeans",
-  "Tree_Nuts",
-  "Wheat",
-];
+export const ALLERGENS = {
+  Crustacean: ["Crab", "Lobster", "Prawn", "Shrimp"],
+  Dairy: ["Casein", "Lactose", "Milk", "Whey"],
+  EggProduct: ["EggWhite", "EggYolk", "WholeEgg"],
+  Fish: ["Cod", "Salmon", "Tilapia", "Tuna"],
+  Grain: ["Barley", "Oat", "Rye", "Wheat"],
+  Legume: ["Chickpea", "Lentil", "Peanut", "Soy"],
+  TreeNut: ["Almond", "Cashew", "Pistachio", "Walnut"],
+};
+
 export const PRIORITIES = ["High", "Medium", "Low"];
