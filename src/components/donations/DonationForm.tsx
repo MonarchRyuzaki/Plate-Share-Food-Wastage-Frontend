@@ -31,7 +31,14 @@ import { ALLERGENS, FOOD_TYPES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon, Clock, MapPin, Upload } from "lucide-react";
+import {
+  CalendarIcon,
+  Clock,
+  MapPin,
+  Plus,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -68,12 +75,32 @@ interface DonationFormProps {
   donation?: Partial<DonationFormValues> & { id?: string };
 }
 
+type FoodTypeFilter = {
+  id: string;
+  category: string;
+  specificItem: string;
+};
+
+type AllergenFilter = {
+  id: string;
+  category: string;
+  specificItem: string;
+};
+
 export function DonationForm({ donation }: DonationFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [locationObtained, setLocationObtained] = useState(false);
+
+  const [foodTypeFilters, setFoodTypeFilters] = useState<FoodTypeFilter[]>([
+    { id: crypto.randomUUID(), category: "", specificItem: "" },
+  ]);
+
+  const [allergenFilters, setAllergenFilters] = useState<AllergenFilter[]>([
+    { id: crypto.randomUUID(), category: "", specificItem: "" },
+  ]);
 
   const defaultValues: Partial<DonationFormValues> = donation || {
     title: "",
@@ -158,6 +185,104 @@ export function DonationForm({ donation }: DonationFormProps) {
     }
   }, []);
 
+  // Food Type Filter Handlers
+  const addFoodTypeFilter = () => {
+    setFoodTypeFilters([
+      ...foodTypeFilters,
+      { id: crypto.randomUUID(), category: "", specificItem: "" },
+    ]);
+  };
+
+  const removeFoodTypeFilter = (id: string) => {
+    if (foodTypeFilters.length > 1) {
+      setFoodTypeFilters(foodTypeFilters.filter((filter) => filter.id !== id));
+      // Update form value
+      const remainingItems = foodTypeFilters
+        .filter((f) => f.id !== id && f.specificItem)
+        .map((f) => f.specificItem);
+      form.setValue("type", remainingItems);
+    }
+  };
+
+  const updateFoodTypeFilter = (
+    id: string,
+    field: keyof FoodTypeFilter,
+    value: string
+  ) => {
+    setFoodTypeFilters((prev) =>
+      prev.map((filter) => {
+        if (filter.id === id) {
+          const updated = { ...filter, [field]: value };
+          // Reset specificItem when category changes
+          if (field === "category") {
+            updated.specificItem = "";
+          }
+          return updated;
+        }
+        return filter;
+      })
+    );
+
+    // Update form value
+    setTimeout(() => {
+      const selectedItems = foodTypeFilters
+        .map((f) =>
+          f.id === id && field === "specificItem" ? value : f.specificItem
+        )
+        .filter(Boolean);
+      form.setValue("type", selectedItems);
+    }, 0);
+  };
+
+  // Allergen Filter Handlers
+  const addAllergenFilter = () => {
+    setAllergenFilters([
+      ...allergenFilters,
+      { id: crypto.randomUUID(), category: "", specificItem: "" },
+    ]);
+  };
+
+  const removeAllergenFilter = (id: string) => {
+    if (allergenFilters.length > 1) {
+      setAllergenFilters(allergenFilters.filter((filter) => filter.id !== id));
+      // Update form value
+      const remainingItems = allergenFilters
+        .filter((f) => f.id !== id && f.specificItem)
+        .map((f) => f.specificItem);
+      form.setValue("allergens", remainingItems);
+    }
+  };
+
+  const updateAllergenFilter = (
+    id: string,
+    field: keyof AllergenFilter,
+    value: string
+  ) => {
+    setAllergenFilters((prev) =>
+      prev.map((filter) => {
+        if (filter.id === id) {
+          const updated = { ...filter, [field]: value };
+          // Reset specificItem when category changes
+          if (field === "category") {
+            updated.specificItem = "";
+          }
+          return updated;
+        }
+        return filter;
+      })
+    );
+
+    // Update form value
+    setTimeout(() => {
+      const selectedItems = allergenFilters
+        .map((f) =>
+          f.id === id && field === "specificItem" ? value : f.specificItem
+        )
+        .filter(Boolean);
+      form.setValue("allergens", selectedItems);
+    }, 0);
+  };
+
   async function onSubmit(data: DonationFormValues) {
     if (isSubmitting) return;
 
@@ -165,7 +290,7 @@ export function DonationForm({ donation }: DonationFormProps) {
 
     try {
       const formData = new FormData();
-
+      // console.log(data);
       // Strings (no change needed)
       formData.append("title", data.title);
       formData.append("description", data.description);
@@ -426,113 +551,172 @@ export function DonationForm({ donation }: DonationFormProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="type"
-          render={() => (
-            <FormItem>
-              <div className="mb-4">
-                <FormLabel className="text-base">Food Types</FormLabel>
-                <FormDescription>
-                  Select all applicable food types.
-                </FormDescription>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <div>
+              <FormLabel className="text-base">Food Types</FormLabel>
+              <FormDescription>
+                Select the food categories and specific items.
+              </FormDescription>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addFoodTypeFilter}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Food Type
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {foodTypeFilters.map((filter, index) => (
+              <div
+                key={filter.id}
+                className="p-3 border rounded-md space-y-2 bg-muted/30"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Food Type {index + 1}
+                  </span>
+                  {foodTypeFilters.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFoodTypeFilter(filter.id)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                <Select
+                  value={filter.category}
+                  onValueChange={(value) =>
+                    updateFoodTypeFilter(filter.id, "category", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(FOOD_TYPES).map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {filter.category && (
+                  <Select
+                    value={filter.specificItem}
+                    onValueChange={(value) =>
+                      updateFoodTypeFilter(filter.id, "specificItem", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Specific Item" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FOOD_TYPES[
+                        filter.category as keyof typeof FOOD_TYPES
+                      ].map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {item}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {FOOD_TYPES.map((type) => (
-                  <FormField
-                    key={type}
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          key={type}
-                          className="flex flex-row items-start space-x-3 space-y-0"
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(type)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([
-                                      ...(field.value || []),
-                                      type,
-                                    ])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== type
-                                      )
-                                    );
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            {type.replace(/_/g, " ")}
-                          </FormLabel>
-                        </FormItem>
-                      );
-                    }}
-                  />
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            ))}
+          </div>
+          <FormMessage>{form.formState.errors.type?.message}</FormMessage>
+        </div>
 
-        <FormField
-          control={form.control}
-          name="allergens"
-          render={() => (
-            <FormItem>
-              <div className="mb-4">
-                <FormLabel className="text-base">Potential Allergens</FormLabel>
-                <FormDescription>
-                  Select any allergens that may be present in the food.
-                </FormDescription>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <div>
+              <FormLabel className="text-base">Potential Allergens</FormLabel>
+              <FormDescription>
+                Select any allergens that may be present in the food.
+              </FormDescription>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addAllergenFilter}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Allergen
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {allergenFilters.map((filter, index) => (
+              <div
+                key={filter.id}
+                className="p-3 border rounded-md space-y-2 bg-muted/30"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Allergen {index + 1}
+                  </span>
+                  {allergenFilters.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAllergenFilter(filter.id)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+                <Select
+                  value={filter.category}
+                  onValueChange={(value) =>
+                    updateAllergenFilter(filter.id, "category", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(ALLERGENS).map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {filter.category && (
+                  <Select
+                    value={filter.specificItem}
+                    onValueChange={(value) =>
+                      updateAllergenFilter(filter.id, "specificItem", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Specific Item" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALLERGENS[filter.category as keyof typeof ALLERGENS].map(
+                        (item) => (
+                          <SelectItem key={item} value={item}>
+                            {item}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {ALLERGENS.map((allergen) => (
-                  <FormField
-                    key={allergen}
-                    control={form.control}
-                    name="allergens"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          key={allergen}
-                          className="flex flex-row items-start space-x-3 space-y-0"
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(allergen)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([
-                                      ...(field.value || []),
-                                      allergen,
-                                    ])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== allergen
-                                      )
-                                    );
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            {allergen.replace(/_/g, " ")}
-                          </FormLabel>
-                        </FormItem>
-                      );
-                    }}
-                  />
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            ))}
+          </div>
+        </div>
 
         <Button type="submit" disabled={isSubmitting || !locationObtained}>
           {isSubmitting ? "Creating Donation..." : "Create Donation"}
