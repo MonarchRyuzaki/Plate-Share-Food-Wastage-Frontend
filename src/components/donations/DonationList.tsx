@@ -72,12 +72,14 @@ export default function DonationList() {
 
       const rejectedFood = searchParams.get("rejectedFood");
       if (rejectedFood && rejectedFood.trim()) {
-        params.append("rejectsFoodType", rejectedFood);
+        const neededRejectedFood = JSON.parse(rejectedFood).map((item: any) => item.specific || item.parent);
+        params.append("rejectsFoodType", JSON.stringify(neededRejectedFood));
       }
-
+      
       const avoidAllergens = searchParams.get("avoidAllergens");
       if (avoidAllergens && avoidAllergens.trim()) {
-        params.append("avoidsAllergens", avoidAllergens);
+        const avoidedAllergens = JSON.parse(avoidAllergens).map((item: any) => item.specific || item.parent);
+        params.append("avoidsAllergens", JSON.stringify(avoidedAllergens));
       }
 
       console.log("Fetching donations with params:", params.toString());
